@@ -16,3 +16,8 @@ async def root():
     logger.debug(f"Value: {value}")
     logger.debug("Hello World")
     return {"message": "Hello World"}
+
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
