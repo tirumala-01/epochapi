@@ -13,7 +13,7 @@ async def register_lua_script(script):
 async def hset(name, key, value):
     try:
         await cache.client.hset(name, key, value)
-        await cache.client.expire(key, 604800)
+        # await cache.client.expire(key, 604800)
     except Exception as e:
         logger.debug(f"Error setting hash value: {e}")
 
@@ -37,7 +37,7 @@ async def hgetall(name):
 async def rpush(key, list):
     try:
         await cache.client.rpush(key, *list)
-        await cache.client.expire(key, 604800)
+        # await cache.client.expire(key, 604800)
     except Exception as e:
         logger.debug(f"Error settign list: {e}")
 
@@ -48,3 +48,19 @@ async def lrangeall(key):
         return result
     except Exception as e:
         logger.debug(f"Error getting all list values: {e}")
+
+
+async def set(key, value):
+    try:
+        await cache.client.set(key, value)
+        # await cache.client.expire(key, 604800)
+    except Exception as e:
+        logger.debug(f"Error setting value: {e}")
+
+
+async def get(key):
+    try:
+        result = await cache.client.get(key)
+        return result
+    except Exception as e:
+        logger.debug(f"Error getting value: {e}")

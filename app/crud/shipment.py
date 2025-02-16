@@ -1,8 +1,8 @@
+import json
 import asyncpg
 from loguru import logger
 from app.commons.postgres import database
-from app.schemas.shipment import ShipmentCost
-from app.commons.redis_helper import rpush, lrangeall
+from app.commons.redis_helper import rpush, lrangeall, set, get
 
 
 async def get_city_names(city_type):
@@ -43,22 +43,31 @@ async def get_total_ship_cost(cost_type):
     if cost_type not in ["highest", "lowest"]:
         raise ValueError("Invalid cost type. Must be 'highest' or 'lowest'")
 
-    query = f"select * from {cost_type}shipmentcost"
-    shipment_costs = []
     try:
+
+        cache_key = f"expensive_cities:{cost_type}"
+        shipment_costs = await get(cache_key)
+
+        if shipment_costs:
+            logger.debug(f"{cache_key} cache hit")
+            return json.loads(shipment_costs)
+
+        query = f"select * from {cost_type}shipmentcost"
+        shipment_costs = []
         async with database.pool.acquire() as connection:
             try:
                 results = await connection.fetch(query)
                 for record in results:
                     shipment_costs.append(
-                        ShipmentCost(
-                            route_id=record["route_id"],
-                            origin=record["origin"],
-                            destination=record["destination"],
-                            total_shipment_cost=record["total_shipment_cost"],
-                            type=cost_type.capitalize(),
-                        )
+                        {
+                            "route_id": record["route_id"],
+                            "origin": record["origin"],
+                            "destination": record["destination"],
+                            "total_shipment_cost": str(record["total_shipment_cost"]),
+                            "type": cost_type.capitalize(),
+                        }
                     )
+                await set(cache_key, json.dumps(shipment_costs))
             except asyncpg.PostgresError as e:
                 logger.debug(f"Database error: {e}")
                 return []
