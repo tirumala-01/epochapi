@@ -1,22 +1,31 @@
-import redis
+import redis.asyncio as redis
 from ..config import settings
 
 REDIS_HOST = settings.REDIS_HOST
-
-try:
-    redis_client = redis.Redis(host=REDIS_HOST, port=6379, decode_responses=True)
-    redis_client.ping()
-    print("Successfully connected to Redis.")
-except redis.exceptions.ConnectionError as e:
-    print(f"Error connecting to Redis: {e}")
-    redis_client = None
+REDIS_PORT = settings.REDIS_PORT
+REDIS_USERNAME = settings.REDIS_USERNAME
+REDIS_PASSWORD = settings.REDIS_PASSWORD
 
 
-def get_redis():
-    if redis_client:
-        try:
-            yield redis_client
-        finally:
-            pass
-    else:
-        yield None
+class RedisCache:
+    def __init__(self, host, port, username, password):
+        self.host = host
+        self.port = port
+        self.username = username
+        self.password = password
+        self.decode_responses = True
+
+    async def connect(self):
+        self.client = await redis.Redis(
+            host=self.host,
+            port=self.port,
+            username=self.username,
+            password=self.password,
+            decode_responses=self.decode_responses,
+        )
+
+    async def disconnect(self):
+        await self.client.aclose()
+
+
+cache = RedisCache(REDIS_HOST, REDIS_PORT, REDIS_USERNAME, REDIS_PASSWORD)

@@ -2,12 +2,15 @@ from fastapi import FastAPI
 from .routers import router as api_router
 from contextlib import asynccontextmanager
 from .commons.postgres import database
+from .commons.redis_cache import cache
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await cache.connect()
     await database.connect()
     yield
+    await cache.disconnect()
     await database.disconnect()
 
 
