@@ -30,6 +30,21 @@ def extract_delivery_time(data: Dict[str, Any], metric: str) -> Dict[str, Any]:
     }
     return filtered_entry
 
+def extract_shipment_cost(data: Dict[str, Any], metric: str) -> Dict[str, Any]:
+    valid_metrics = {
+        "average": "avg_shipment_cost",
+        "maximum": "max_shipment_cost",
+        "minimum": "min_shipment_cost",
+        "total": "total_shipment_cost",
+    }
+    metric_key = valid_metrics[metric]
+    filtered_entry = {
+        key: value
+        for key, value in data.items()
+        if key in {"route_id", "origin", "destination", "total_trips", metric_key}
+    }
+    return filtered_entry
+
 
 async def get_city_names(city_type: str) -> List[str]:
     if city_type not in ["origin", "destination"]:
@@ -125,11 +140,49 @@ async def get_ship_cost(
 
     route_id = f"{origin}-{destination}"
     cache_key = get_cache_key(f"shipment:cost:{route_id}")
+    shipment_cost = await hgetall(cache_key)
+
+    if shipment_cost:
+        logger.debug(f"{cache_key} cache hit")
+        return extract_shipment_cost(shipment_cost, cost_type)
+
+    query = f"SELECT * FROM costbyroute WHERE route_id='{route_id}' LIMIT 1"
+    shipment_cost = {}
+
+    async with database.pool.acquire() as connection:
+        try:
+            results = await connection.fetchrow(query)
+            if results:
+                shipment_cost = dict(results)
+            shipment_cost = convert_numbers_to_string(shipment_cost)
+            await hset(cache_key, shipment_cost)
+            return extract_shipment_cost(shipment_cost, cost_type)
+        except asyncpg.PostgresError as e:
+            logger.debug(f"Database error: {e}")
+            return {}
+        except Exception as e:
+            logger.debug(f"Error: {e}")
+            return {}
+
+    return {}
+
+
+async def get_ship_time(origin: str, destination: str, time_type: str):
+    if time_type not in ["average", "maximum", "minimum", "total"]:
+        raise ValueError(
+            "Invalid cost type. Must be in 'average', 'minimum', 'maximum' or 'total'"
+        )
+
+    validate_city_names(origin, destination)
+    logger.info(f"Getting {time_type} shipment time for {origin}-{destination}")
+
+    route_id = f"{origin}-{destination}"
+    cache_key = get_cache_key(f"shipment:time:{route_id}")
     delivery_time = await hgetall(cache_key)
 
     if delivery_time:
         logger.debug(f"{cache_key} cache hit")
-        return extract_delivery_time(delivery_time, cost_type)
+        return extract_delivery_time(delivery_time, time_type)
 
     query = f"SELECT * FROM deliverytimesbyroute WHERE route_id='{route_id}' LIMIT 1"
     delivery_time = {}
@@ -141,12 +194,11 @@ async def get_ship_cost(
                 delivery_time = dict(results)
             delivery_time = convert_numbers_to_string(delivery_time)
             await hset(cache_key, delivery_time)
-            return extract_delivery_time(delivery_time, cost_type)
+            return extract_delivery_time(delivery_time, time_type)
         except asyncpg.PostgresError as e:
             logger.debug(f"Database error: {e}")
             return {}
         except Exception as e:
             logger.debug(f"Error: {e}")
             return {}
-
     return {}
