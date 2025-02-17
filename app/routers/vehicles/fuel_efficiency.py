@@ -1,39 +1,25 @@
-from enum import Enum
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from loguru import logger
+from typing import Literal
 from pydantic import BaseModel
+from app.crud.vehicle import get_fuel_info
 
 router = APIRouter(prefix="/fuel-efficiency")
 
 
-class FuelEfficiency(Enum):
-    """Category of Fuel Efficiency"""
-
-    AVERAGE = "average"
-    MAXIMUM = "maximum"
-    MINIMUM = "minimum"
+class FuelEfficiency(BaseModel):
+    operation: Literal["average", "maximum", "minimum"]
 
 
 @router.get("/{vehicle_id}")
-async def get_fuel_efficiency(
-    vehicle_id: str,
-    q: FuelEfficiency | None = Query(
-        FuelEfficiency.AVERAGE, description="Type of fuel efficiency to get"
-    )
-):
-    logger.info(f"Getting {q} fuel efficiency for vehicle {vehicle_id}")
-
-
-
-    return {
-        "vehicle_id": vehicle_id,
-        "vehicle_full_id": "V-020",
-        "vehicle_name": "Vehicle 20",
-        "mileage_per_liter": 15.5,
-        "operation": q.value,
-    }
-
-
-
-def getResourceId(xid: str) -> int:
-    return int(xid.split("-")[1])
+async def get_fuel_efficiency(vehicle_id: str, q: FuelEfficiency = Query(...)):
+    try:
+        return await get_fuel_info(vehicle_id, q.operation)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    except ValueError as e:
+        logger.error(f"Value error getting fuel efficiency for {vehicle_id}: {e}")
+        raise HTTPException(status_code=400, detail="Bad Request")
+    except Exception as e:
+        logger.error(f"Error getting fuel efficiency for {vehicle_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")

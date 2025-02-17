@@ -14,12 +14,12 @@ class Type(BaseModel):
 @router.get("")
 async def get_cities(q: Type = Query(...)) -> List[str]:
     try:
-        logger.info(f"Getting {q.type} cities")
-        if q.type == "origin":
-            result = await get_city_names(q.type)
-        else:
-            result = await get_city_names(q.type)
-        return result
+        return await get_city_names(q.type)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    except ValueError as e:
+        logger.error(f"Value error getting cities: {e}")
+        raise HTTPException(status_code=400, detail="Bad Request")
     except Exception as e:
         logger.error(f"Error getting {e} cities")
         raise HTTPException(status_code=500, detail="Internal Server Error")

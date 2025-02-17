@@ -14,12 +14,12 @@ class RouteType(BaseModel):
 @router.get("")
 async def get_expensive_routes(q: RouteType = Query(...)) -> List[ShipmentCost]:
     try:
-        logger.info(f"Getting {q.operation} expensive routes")
-        if q.operation == "highest":
-            result = await get_total_ship_cost(q.operation)
-        else:
-            result = await get_total_ship_cost(q.operation)
-        return result
+        return await get_total_ship_cost(q.operation)
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    except ValueError as e:
+        logger.error(f"Value error getting expensive routes: {e}")
+        raise HTTPException(status_code=400, detail="Bad Request")
     except Exception as e:
         logger.error(f"Error getting {e} expensive routes")
         raise HTTPException(status_code=500, detail="Internal Server Error")

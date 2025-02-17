@@ -15,7 +15,10 @@ async def get_route_cost(origin: str, destination: str, q: RouteCost = Query(...
     try:
         return await get_ship_cost(origin, destination, q.operation)
     except HTTPException as e:
-        raise
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    except ValueError as e:
+        logger.error(f"Value error getting fuel efficiency for {origin}-{destination}: {e}")
+        raise HTTPException(status_code=400, detail="Bad Request")
     except Exception as e:
         logger.error(f"Error getting shipment costs for {origin}-{destination}: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")

@@ -19,7 +19,10 @@ async def get_delivery_time(
     try:
         return await get_ship_time(origin, destination, q.operation)
     except HTTPException as e:
-        raise
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    except ValueError as e:
+        logger.error(f"Value error getting fuel efficiency for for {origin}-{destination}: {e}")
+        raise HTTPException(status_code=400, detail="Bad Request")
     except Exception as e:
         logger.error(f"Error getting shipment times for {origin}-{destination}: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")

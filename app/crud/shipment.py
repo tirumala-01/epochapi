@@ -30,6 +30,7 @@ def extract_delivery_time(data: Dict[str, Any], metric: str) -> Dict[str, Any]:
     }
     return filtered_entry
 
+
 def extract_shipment_cost(data: Dict[str, Any], metric: str) -> Dict[str, Any]:
     valid_metrics = {
         "average": "avg_shipment_cost",
@@ -50,7 +51,8 @@ async def get_city_names(city_type: str) -> List[str]:
     if city_type not in ["origin", "destination"]:
         raise ValueError("Invalid cost type. Must be 'origin' or 'destination'")
 
-    cache_key = f"{city_type}_cities"
+    logger.info(f"Getting {city_type} cities")
+    cache_key = f"cities:type:{city_type}"
     shipment_cities = await lrangeall(cache_key)
 
     if shipment_cities:
@@ -94,8 +96,8 @@ def get_cache_key(key: str) -> str:
 async def get_total_ship_cost(cost_type: str) -> List[Dict[str, Any]]:
     if cost_type not in ["highest", "lowest"]:
         raise ValueError("Invalid cost type. Must be 'highest' or 'lowest'")
-
-    cache_key = f"expensive_cities:{cost_type}"
+    logger.info(f"Getting {cost_type} expensive routes")
+    cache_key = f"expensive:{cost_type}:cities"
     shipment_costs = await get(cache_key)
 
     if shipment_costs:
@@ -136,10 +138,10 @@ async def get_ship_cost(
         )
 
     validate_city_names(origin, destination)
-    logger.info(f"Getting {cost_type} shipment costs for {origin}-{destination}")
+    logger.debug(f"Getting {cost_type} shipment costs for {origin}-{destination}")
 
     route_id = f"{origin}-{destination}"
-    cache_key = get_cache_key(f"shipment:cost:{route_id}")
+    cache_key = get_cache_key(f"cost:{route_id}:shipment")
     shipment_cost = await hgetall(cache_key)
 
     if shipment_cost:
@@ -174,10 +176,10 @@ async def get_ship_time(origin: str, destination: str, time_type: str):
         )
 
     validate_city_names(origin, destination)
-    logger.info(f"Getting {time_type} shipment time for {origin}-{destination}")
+    logger.debug(f"Getting {time_type} shipment time for {origin}-{destination}")
 
     route_id = f"{origin}-{destination}"
-    cache_key = get_cache_key(f"shipment:time:{route_id}")
+    cache_key = get_cache_key(f"time:delivery:{route_id}")
     delivery_time = await hgetall(cache_key)
 
     if delivery_time:
