@@ -9,7 +9,7 @@ from app.commons.postgres import database
 
 
 def validate_vehicle_name(vehicle_id):
-    vehicle_id_re = "^V-(0{2}[1-9]|[1-9][0-9]{2})$"  # Adjust the regex to match the expected vehicle ID format
+    vehicle_id_re = "^V-(0{2}[1-9]|[1-9][0-9]{2})$"
     if not re.match(vehicle_id_re, vehicle_id):
         logger.error(f"Invalid Vehicle Id {vehicle_id}")
         raise ValueError("Invalid Vehicle Id")

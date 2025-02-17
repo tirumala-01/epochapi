@@ -2,7 +2,6 @@ from fastapi import APIRouter, Query, HTTPException
 from loguru import logger
 from typing import Literal
 from pydantic import BaseModel
-from app.schemas.shipment import DeliveryTimesByRoute
 from app.crud.shipment import get_ship_time
 
 router = APIRouter(prefix="/delivery-time")
