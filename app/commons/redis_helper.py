@@ -10,10 +10,10 @@ async def register_lua_script(script):
         logger.debug(f"Error loading Lua script: {e}")
 
 
-async def hset(name, key, value):
+async def hset(name, mapping):
     try:
-        await cache.client.hset(name, key, value)
-        # await cache.client.expire(key, 604800)
+        await cache.client.hset(name, mapping=mapping)
+        # await cache.client.expire(name, 604800)
     except Exception as e:
         logger.debug(f"Error setting hash value: {e}")
 
