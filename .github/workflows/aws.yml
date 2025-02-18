@@ -80,9 +80,12 @@ jobs:
               id: task-def
               uses: aws-actions/amazon-ecs-render-task-definition@v1
               with:
-                  task-definition: $(aws ecs describe-task-definition --task-definition epoch-app-task --query 'taskDefinition.taskDefinitionArn' --output text)
+                  task-definition: ${{ env.ECS_TASK_DEFINITION }}
                   container-name: ${{ env.CONTAINER_NAME }}
                   image: ${{ steps.build-image.outputs.image }}
+                  secrets: |
+                    REDIS_HOST=arn:aws:ssm:us-east-1:637047433738:parameter/epoch/redis/url
+                    DATABASE_URL=arn:aws:ssm:us-east-1:637047433738:parameter/epoch/rds/url
 
             - name: Deploy Amazon ECS task definition
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
