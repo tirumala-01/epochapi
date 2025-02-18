@@ -1,7 +1,7 @@
 .venv/
-app/__pycache__
-
-
+*.pyc
 *.env
 *.env.*
 env.*
+
+*.vscode*

@@ -1,21 +1,26 @@
 from fastapi import FastAPI
-from loguru import logger
+from .routers import router as api_router
+from contextlib import asynccontextmanager
+from .commons.postgres import database
+from .commons.redis_cache import cache
 
-import redis
 
-pool = redis.ConnectionPool(host='epoch-app-elasticache.a8tmon.clustercfg.use1.cache.amazonaws.com', port=6379, db=0)
-r = redis.Redis(connection_pool=pool)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await cache.connect()
+    await database.connect()
+    yield
+    await cache.disconnect()
+    database.disconnect()
 
-app = FastAPI()
+
+app = FastAPI(lifespan=lifespan)
+app.include_router(api_router)
 
 
 @app.get("/")
 async def root():
-    r.set('key', 'value')
-    value = r.get('key')
-    logger.debug(f"Value: {value}")
-    logger.debug("Hello World")
-    return {"message": "Hello World"}
+    return {"status": "ok"}
 
 
 @app.get("/health")
