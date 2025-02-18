@@ -87,5 +87,66 @@ class Postgres:
             finally:
                 await self._connection_pool.release(con)
 
+    async def get_shipment_time_city(self, route):
+        if not self._connection_pool:
+            await self.connect()
+        else:
+            con = await self._connection_pool.acquire()
+            try:
+                stmt = await con.prepare(
+                    "SELECT * FROM deliverytimesbyroute WHERE route_id= $1"
+                )
+                return await stmt.fetchrow(route)
+            except Exception as e:
+                logger.debug(f"Error: {e}")
+            finally:
+                await self._connection_pool.release(con)
+
+
+    async def get_shipment_cost_city(self, route):
+        if not self._connection_pool:
+            await self.connect()
+        else:
+            con = await self._connection_pool.acquire()
+            try:
+                stmt = await con.prepare(
+                    "SELECT * FROM costbyroute WHERE route_id= $1"
+                )
+                return await stmt.fetchrow(route)
+            except Exception as e:
+                logger.debug(f"Error: {e}")
+            finally:
+                await self._connection_pool.release(con)
+
+    async def get_vehicle_efficiency(self, route):
+        if not self._connection_pool:
+            await self.connect()
+        else:
+            con = await self._connection_pool.acquire()
+            try:
+                stmt = await con.prepare(
+                    "SELECT * FROM fuelefficiencybyvehicle WHERE vehicle_id= $1"
+                )
+                return await stmt.fetchrow(route)
+            except Exception as e:
+                logger.debug(f"Error: {e}")
+            finally:
+                await self._connection_pool.release(con)
+
+    async def get_vehicle_fuelmileage(self, route):
+        if not self._connection_pool:
+            await self.connect()
+        else:
+            con = await self._connection_pool.acquire()
+            try:
+                stmt = await con.prepare(
+                    "SELECT * FROM pasttripsbyvehicle WHERE vehicle_id= $1"
+                )
+                return await stmt.fetchrow(route)
+            except Exception as e:
+                logger.debug(f"Error: {e}")
+            finally:
+                await self._connection_pool.release(con)
+
 
 database = Postgres()

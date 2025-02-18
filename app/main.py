@@ -20,7 +20,7 @@ app.include_router(api_router)
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"status": "ok"}
 
 
 @app.get("/health")

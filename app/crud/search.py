@@ -1,32 +1,11 @@
-import datetime
-import decimal
 import re
-from typing import Any, Union
+from typing import Union
 from loguru import logger
 from app.commons.postgres import database as db
 from app.commons.redis_helper import hgetall, hset
+from .util import convert_numbers_to_string, get_extracted_id
 
 pattern = r"^(?:[LS]-(0[0-9]{5}|[1-9][0-9]{5})|V-(0[0-9]{2}|[1-9][0-9]{2}))$"
-
-
-def get_extracted_id(id: Union[str, int]) -> int:
-    if isinstance(id, str):
-        return int(id.split("-")[1])
-    elif isinstance(id, int):
-        return id
-
-
-def convert_numbers_to_string(data: Any) -> Any:
-    if isinstance(data, dict):
-        return {key: convert_numbers_to_string(value) for key, value in data.items()}
-    elif isinstance(data, list):
-        return [convert_numbers_to_string(item) for item in data]
-    elif isinstance(
-        data, (int, float, decimal.Decimal, datetime.date, datetime.datetime)
-    ):
-        return str(data)
-    else:
-        return data
 
 
 async def get_vehicle_data(id: Union[str, int]):
