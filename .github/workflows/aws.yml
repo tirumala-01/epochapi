@@ -35,7 +35,7 @@ env:
     ECR_REPOSITORY: epoch-app-ecr-repo # set this to your Amazon ECR repository name
     ECS_SERVICE: epoch-app-service # set this to your Amazon ECS service name
     ECS_CLUSTER: epoch-app-cluster # set this to your Amazon ECS cluster name
-    ECS_TASK_DEFINITION: arn:aws:ecs:us-east-1:637047433738:task-definition/epoch-app-task:14
+    ECS_TASK_DEFINITION: .aws/task-definition.json
     CONTAINER_NAME: epoch-app-task
 
 permissions:
