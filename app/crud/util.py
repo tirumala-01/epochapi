@@ -41,7 +41,7 @@ def validate_city_names(origin: str, destination: str) -> None:
 
 
 def validate_vehicle_name(vehicle_id):
-    vehicle_id_re = "^V-(0{2}[1-9]|[1-9][0-9]{2})$"
+    vehicle_id_re = "^V-(0[0-9]{2}|[1-9][0-9]{2})$"
     if not re.match(vehicle_id_re, vehicle_id):
         logger.error(f"Invalid Vehicle Id {vehicle_id}")
         raise ValueError("Invalid Vehicle Id")
